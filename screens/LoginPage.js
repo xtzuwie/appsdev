@@ -1,27 +1,47 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import React, { useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  Alert,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
+import Icon from "react-native-vector-icons/FontAwesome";
+import { auth } from "./firebaseConfig";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
-export default function LoginPage({ navigation }) {  // 'navigation' prop is passed
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export default function LoginPage({ navigation }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false); // State for password visibility
 
   const handleLogin = () => {
-    navigation.navigate('Landing');  // Navigates to Landing Page
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        const user = userCredential.user;
+        console.log("User logged in successfully:", user);
+        navigation.navigate("Landing"); // Navigates to Landing Page
+      })
+      .catch((error) => {
+        Alert.alert("Error", "Invalid credentials");
+      });
+  };
+
+  const handleForgotPassword = () => {
+    navigation.navigate("ForgotPassword");
   };
 
   return (
     <LinearGradient
-      colors={['#ffdab9', '#add8e6', '#ffdab9']}
+      colors={["#0D1E4C", "#C48CB3", "#E5C9D7"]}
       style={styles.gradient}
     >
       <SafeAreaView style={styles.container}>
-        <Image
-          source={require('./assets/LoginImage.png')}
-          style={styles.logo}
-        />
+        <Image source={require("./assets/bg.png")} style={styles.logo} />
         <Text style={styles.title}>Sign In</Text>
 
         {/* Email Input with Icon */}
@@ -45,19 +65,32 @@ export default function LoginPage({ navigation }) {  // 'navigation' prop is pas
             placeholder="Password"
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
+            secureTextEntry={!passwordVisible} // Toggle visibility here
           />
+          <TouchableOpacity
+            style={styles.eyeIcon}
+            onPress={() => setPasswordVisible(!passwordVisible)} // Toggle password visibility
+          >
+            <Icon
+              name={passwordVisible ? "eye" : "eye-slash"} // Change icon based on visibility
+              size={20}
+              color="#000"
+            />
+          </TouchableOpacity>
         </View>
 
-        <Text style={styles.forgotText}>Forgot Password?</Text>
+        {/* TouchableOpacity for Forgot Password */}
+        <TouchableOpacity onPress={handleForgotPassword}>
+          <Text style={styles.forgotText}>Forgot Password?</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Sign In</Text>
         </TouchableOpacity>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account?</Text> 
-          <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+          <Text style={styles.footerText}>Don't have an account?</Text>
+          <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
             <Text style={styles.signupText}>Sign Up</Text>
           </TouchableOpacity>
         </View>
@@ -72,31 +105,31 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     paddingHorizontal: 20,
   },
   logo: {
     width: 150,
     height: 150,
     marginBottom: 40,
-    alignSelf: 'center',
+    alignSelf: "center",
     borderRadius: 20,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 30,
-    textAlign: 'center',
-    color: '#fff',
+    textAlign: "center",
+    color: "#fff",
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
     borderRadius: 10,
     marginBottom: 20,
     borderWidth: 2,
-    borderColor: '#191970',
+    borderColor: "#191970",
     paddingHorizontal: 15,
     height: 50,
   },
@@ -106,40 +139,46 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginRight: 10,
-    color: '#000000',
+    color: "#000000",
+  },
+  eyeIcon: {
+    position: "absolute",
+    right: 15,
+    top: "50%",
+    transform: [{ translateY: -10 }],
   },
   button: {
-    width: '100%',
-    backgroundColor: '#191970',
+    width: "100%",
+    backgroundColor: "#26415E",
     paddingVertical: 15,
     borderRadius: 20,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 10,
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   forgotText: {
-    textAlign: 'right',
-    color: 'blue',
+    textAlign: "right",
+    color: "blue",
     marginVertical: 20,
     marginTop: 10,
   },
   footer: {
     marginTop: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   footerText: {
-    color: '#fff',
+    color: "#000",
     marginVertical: 5,
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
   signupText: {
-    color: '#000',
+    color: "#000",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });

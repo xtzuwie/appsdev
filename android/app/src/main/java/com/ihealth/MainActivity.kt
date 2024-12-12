@@ -1,4 +1,4 @@
-package com.health
+package com.ihealth
 
 import android.os.Build
 import android.os.Bundle

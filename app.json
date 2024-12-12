@@ -3,6 +3,12 @@
     "name": "Health",
     "slug": "Health",
     "version": "1.0.0",
-    "entryPoint": "./screens/Entrance.js"
+    "entryPoint": "./screens/OnBoarding.js",
+    "android": {
+      "package": "com.ihealth"
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }

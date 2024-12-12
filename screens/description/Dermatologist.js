@@ -8,47 +8,32 @@ import {
   ActivityIndicator,
 } from "react-native";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
-import { getFirestore, collection, addDoc } from "firebase/firestore";
+import { createPaymentLink } from "./Paymongo/payApi"; // Import the API function
 import { useNavigation } from "@react-navigation/native"; // Import useNavigation
-import { getAuth } from "firebase/auth";
+import { Linking } from "react-native"; // Import Linking to open the URL in a browser
 
-const GeneralMedicine = () => {
+const Dermatologist = () => {
   const navigation = useNavigation(); // Get the navigation prop
   const [activeSection, setActiveSection] = useState("details");
   const [loading, setLoading] = useState(false);
-  const firestore = getFirestore();
-  const auth = getAuth();
 
   const handleBookConsultation = async () => {
     setLoading(true);
-
-    const user = auth.currentUser;
-
-    if (!user) {
-      alert("You must logged in first");
-      setLoading(false);
-      return;
-    }
-
-    const consultationData = {
-      type: "General Medicine",
-      price: 850,
-      status: "Pending",
-      timestamp: new Date().toISOString(),
-      uid: user.uid,
-    };
-
     try {
-      // Add to Firestore
-      await addDoc(collection(firestore, "appointments"), consultationData);
-
-      alert("Consultation booked successfully!");
-
-      // Redirect to Profile > Consultation tab
-      navigation.navigate("Profile", { screen: "ConsultationHistory" });
+      const paymentUrl = await createPaymentLink(
+        850,
+        "Dermatologist Consultation"
+      );
+      if (paymentUrl) {
+        // Open the payment URL in the default browser
+        Linking.openURL(paymentUrl); // Use Linking API to open the URL in the browser
+      } else {
+        console.error("Payment link not generated");
+        alert("Failed to generate payment link.");
+      }
     } catch (error) {
-      console.error("Error booking consultation:", error);
-      alert("Error booking consultation: " + error.message);
+      console.error("Error in booking consultation:", error);
+      alert("Error occurred during booking.");
     } finally {
       setLoading(false);
     }
@@ -66,7 +51,7 @@ const GeneralMedicine = () => {
       {/* Fixed Title and Toggle Buttons */}
       <View style={styles.fixedTitleAndToggle}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>General Medicine</Text>
+          <Text style={styles.title}>Dermatologist</Text>
         </View>
         <View style={styles.toggleContainer}>
           <TouchableOpacity
@@ -105,12 +90,11 @@ const GeneralMedicine = () => {
         {activeSection === "details" && (
           <View style={styles.section}>
             <Text style={styles.description}>
-              General Practitioners (GPs) are your first line of support when it
-              comes to any medical concern. They provide a wide range of
-              healthcare services, including diagnosis, treatment, preventive
-              care, and management of long-term conditions.
+              Our Dermatology is a specialized medical field focused on the
+              skin, hair, and nails. Dermatologists diagnose and treat a wide
+              range of conditions, from common skin problems like acne and
+              eczema to more serious concerns like skin cancer.
             </Text>
-
             <Text style={styles.subtitle}>What to Expect</Text>
             <View style={styles.expectations}>
               <View style={styles.expectation}>
@@ -137,26 +121,6 @@ const GeneralMedicine = () => {
                   In-Person Consultation
                 </Text>
               </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {activeSection === "whom" && (
-          <View style={styles.section}>
-            <Text style={styles.whomText}>
-              Individuals with chronic conditions like asthma, diabetes, or
-              those seeking preventive care, vaccinations, and general health
-              check-ups would benefit from a consultation with a General
-              Medicine specialist.
-            </Text>
-          </View>
-        )}
-
-        {activeSection === "reviews" && (
-          <View style={styles.section}>
-            <Text style={styles.reviewsText}>No Reviews Yet</Text>
-            <View style={styles.noReviewImage}>
-              <FontAwesome name="smile-o" size={50} color="#ccc" />
             </View>
           </View>
         )}
@@ -202,7 +166,7 @@ const styles = StyleSheet.create({
   },
   fixedTitleAndToggle: {
     position: "absolute",
-    top: 50,
+    top: 50, // Positioned below the header
     left: 0,
     right: 0,
     backgroundColor: "#fff",
@@ -236,7 +200,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    paddingTop: 180,
+    paddingTop: 180, // Offset to avoid overlap with fixed header and title/toggle
     paddingBottom: 100,
   },
   section: {
@@ -288,20 +252,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
   },
-  whomText: {
-    fontSize: 16,
-    color: "#333",
-    textAlign: "center",
-  },
-  reviewsText: {
-    fontSize: 16,
-    color: "#333",
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  noReviewImage: {
-    alignItems: "center",
-  },
   consultationBox: {
     position: "absolute",
     bottom: 0,
@@ -309,13 +259,13 @@ const styles = StyleSheet.create({
     right: 0,
     padding: 30,
     backgroundColor: "#f5fffa",
-    alignItems: "center",
-    justifyContent: "space-between",
     flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   priceText: {
     fontSize: 16,
-    color: "191970",
+    color: "#191970",
   },
   bookButton: {
     backgroundColor: "#1e90ff",
@@ -324,9 +274,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   bookButtonText: {
+    color: "#333",
     fontWeight: "bold",
-    color: "#fff",
   },
 });
 
-export default GeneralMedicine;
+export default Dermatologist;

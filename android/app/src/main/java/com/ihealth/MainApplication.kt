@@ -1,4 +1,4 @@
-package com.health
+package com.ihealth
 
 import android.app.Application
 import android.content.res.Configuration

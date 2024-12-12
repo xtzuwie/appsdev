@@ -1,65 +1,166 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+} from "react-native";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
+import { getAuth, signOut } from "firebase/auth";
+import { db, ref, onValue } from "./firebaseConfig"; // Import Firebase functions
 
-const SettingsScreen = ({ navigation }) => {
-  const [isModalVisible, setModalVisible] = useState(false);
+const Profile = ({ navigation }) => {
+  const [activeTab, setActiveTab] = useState("Profile");
+  const [user, setUser] = useState({
+    name: "Loading...", // Default placeholder text
+    email: "Loading...",
+    location: "Loading...",
+    image: "https://via.placeholder.com/100", // Placeholder image URL
+  });
+  const [loading, setLoading] = useState(true); // Loading state
+
+  const auth = getAuth(); // Initialize Firebase Auth
+
+  useEffect(() => {
+    const currentUser = auth.currentUser;
+    console.log("Current User:", currentUser); // Log the current user to check if they are authenticated
+
+    if (currentUser) {
+      const userRef = ref(db, `users/${currentUser.uid}`);
+
+      const unsubscribe = onValue(userRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          console.log("User Data:", data); // Log the data fetched from Firebase
+          setUser({
+            name:
+              `${data.firstName || ""} ${data.lastName || ""}`.trim() ||
+              currentUser.displayName ||
+              "Anonymous", // Default to Firebase displayName or "Anonymous"
+            email: currentUser.email,
+            location:
+              data.address && data.address !== ""
+                ? data.address
+                : "Not Available", // Show a default message if location is not set
+            image: currentUser.photoURL || "https://via.placeholder.com/100", // Get profile image if available
+          });
+        } else {
+          console.log("No user data found");
+          // Optionally, you can update state here if no data exists
+        }
+        setLoading(false); // Set loading to false after fetching user info
+      });
+
+      return () => unsubscribe(); // Cleanup the listener on unmount
+    } else {
+      console.log("No user is logged in");
+      setLoading(false); // Stop loading if no user is logged in
+    }
+  }, [auth]);
+
+  const menuItems = [
+    {
+      id: "1",
+      title: "Consultations",
+      navigate: "ConsultHistory",
+      icon: "history",
+    },
+    { id: "2", title: "My Information", navigate: "MyInfo", icon: "info" },
+    { id: "3", title: "About", navigate: "AboutUs", icon: "info-circle" },
+  ];
 
   const handleLogout = () => {
-    // Navigate to LoginPage
-    navigation.navigate('Login');
+    signOut(auth)
+      .then(() => {
+        navigation.navigate("Login"); // Navigate back to the Login page after sign-out
+      })
+      .catch((error) => {
+        console.error("Logout error: ", error);
+      });
   };
 
   return (
     <View style={styles.container}>
-      {/* Header with Settings Title */}
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Image source={{ uri: user.image }} style={styles.profileImage} />
+        <Text style={styles.name}>{user.name}</Text>
+        <Text style={styles.email}>{user.email}</Text>
+        {user.location && <Text style={styles.location}>{user.location}</Text>}
       </View>
 
-      {/* Options Container */}
-      <View style={styles.optionsContainer}>
-        {/* Option Buttons */}
-        <TouchableOpacity style={styles.optionButton} onPress={() => navigation.navigate('Profile')}>
-          <Icon name="user" size={24} color="#6A1B9A" />
-          <Text style={styles.optionText}>Profile</Text>
+      {/* Menu */}
+      <FlatList
+        data={menuItems}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => navigation.navigate(item.navigate)}
+          >
+            <FontAwesome name={item.icon} size={22} color="#662249" />
+            <Text style={styles.menuText}>{item.title}</Text>
+            <FontAwesome name="chevron-right" size={22} color="#b0848e" />
+          </TouchableOpacity>
+        )}
+      />
+
+      {/* Logout Button */}
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <FontAwesome name="sign-out" size={24} color="#662249" />
+        <Text style={styles.logoutText}>Log out</Text>
+      </TouchableOpacity>
+
+      {/* Bottom Navigation */}
+      <View style={styles.bottomNav}>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => {
+            setActiveTab("Home");
+            navigation.navigate("Home");
+          }}
+        >
+          <FontAwesome
+            name="home"
+            size={24}
+            color={activeTab === "Home" ? "#8c2b8f" : "#bbb"}
+          />
+          <Text style={styles.navText}>Home</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.optionButton} onPress={() => navigation.navigate('AboutUs')}>
-          <Icon name="info-circle" size={24} color="#6A1B9A" />
-          <Text style={styles.optionText}>About Health App</Text>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => {
+            setActiveTab("Book");
+            navigation.navigate("Book");
+          }}
+        >
+          <FontAwesome
+            name="calendar"
+            size={24}
+            color={activeTab === "Book" ? "#8c2b8f" : "#bbb"}
+          />
+          <Text style={styles.navText}>Book</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.optionButton} onPress={() => setModalVisible(true)}>
-          <Icon name="sign-out" size={24} color="#6A1B9A" />
-          <Text style={styles.optionText}>Logout</Text>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => {
+            setActiveTab("Profile");
+            navigation.navigate("Profile");
+          }}
+        >
+          <FontAwesome
+            name="user"
+            size={24}
+            color={activeTab === "Profile" ? "#8c2b8f" : "#bbb"}
+          />
+          <Text style={styles.navText}>Me</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Modal for Logout Confirmation */}
-      <Modal
-        visible={isModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalText}>Are you sure you want to logout?</Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
-                <Text style={styles.modalButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalButton} onPress={handleLogout}>
-                <Text style={styles.modalButtonText}>Logout</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
@@ -67,81 +168,83 @@ const SettingsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 20,
+    paddingBottom: 70,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    paddingVertical: 15,
-    backgroundColor: '#6A1B9A',
+    alignItems: "center",
+    marginVertical: 20,
   },
-  backButton: {
-    position: 'absolute',
-    left: 20,
-    top: 10,
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  name: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#4A4A4A",
     marginTop: 10,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
+  email: {
+    fontSize: 16,
+    color: "#7A7A7A",
+    marginTop: 5,
   },
-  optionsContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 20,
+  location: {
+    fontSize: 14,
+    color: "#7A7A7A",
   },
-  optionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 10,
-    marginVertical: 10,
-    width: '90%',
-    elevation: 2, // Shadow effect for Android
-  },
-  optionText: {
-    fontSize: 18,
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#44174e",
     marginLeft: 10,
-    color: '#333',
+    marginRight: 10,
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
-  },
-  modalContent: {
-    width: '80%',
-    padding: 20,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  modalText: {
+  menuText: {
     fontSize: 18,
-    marginBottom: 20,
-    textAlign: 'center',
+    color: "#1b1931",
+    fontWeight: "semibold",
   },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+  logoutButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 15,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: "#29104a",
+    borderRadius: 30,
   },
-  modalButton: {
-    backgroundColor: '#6A1B9A',
-    padding: 10,
-    borderRadius: 5,
-    width: '48%', // Adjust the width for the buttons
+  logoutText: {
+    fontSize: 16,
+    color: "#a34054",
+    marginLeft: 10,
   },
-  modalButtonText: {
-    color: '#fff',
-    textAlign: 'center',
+  bottomNav: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#ECECEC",
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#ffffff",
+  },
+  navItem: {
+    alignItems: "center",
+  },
+  navText: {
+    fontSize: 12,
+    color: "#4A4A4A",
   },
 });
 
-export default SettingsScreen;
+export default Profile;

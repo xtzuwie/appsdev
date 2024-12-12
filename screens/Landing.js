@@ -1,8 +1,15 @@
-import React, { useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ImageBackground, Animated } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import Icon from 'react-native-vector-icons/FontAwesome';
-import { useNavigation, useFocusEffect } from '@react-navigation/native'; // For navigation and focus effect
+import React, { useRef } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ImageBackground,
+  Animated,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import Icon from "react-native-vector-icons/FontAwesome";
+import { useNavigation, useFocusEffect } from "@react-navigation/native"; // For navigation and focus effect
 
 export default function LandingPage({ navigation }) {
   const fadeAnim = useRef(new Animated.Value(0)).current; // Initial opacity value
@@ -18,7 +25,7 @@ export default function LandingPage({ navigation }) {
       }).start(() => {
         // Automatically navigate to the Content screen after the animation
         setTimeout(() => {
-          navigation.navigate('Content');
+          navigation.navigate("Home");
         }, 1000); // Add a 1-second delay after the animation completes
       });
 
@@ -31,20 +38,25 @@ export default function LandingPage({ navigation }) {
 
   return (
     <ImageBackground
-      source={require('./assets/bg.jpg')} // Replace with your background image
+      source={require("./assets/bg.png")} // Replace with your background image
       style={styles.backgroundImage}
     >
       <View style={styles.content}>
         {/* Semi-circular gradient background */}
         <LinearGradient
-          colors={['#191970', '#00008B']} // Navy gradient colors
+          colors={["#191970", "#00008B"]} // Navy gradient colors
           style={styles.semiCircle}
         >
-          <Animated.View style={{ ...styles.animatedContent, opacity: fadeAnim }}>
-            <Text style={styles.welcomeText}>Welcome to Health App</Text>
+          <Animated.View
+            style={{ ...styles.animatedContent, opacity: fadeAnim }}
+          >
+            <Text style={styles.welcomeText}>Welcome to iHealth</Text>
 
             {/* Button (can be removed if you don't need it for the animation) */}
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Content')}>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => navigation.navigate("Home")}
+            >
               <Icon name="sign-in" size={20} color="#fff" />
             </TouchableOpacity>
           </Animated.View>
@@ -57,40 +69,40 @@ export default function LandingPage({ navigation }) {
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
-    resizeMode: 'cover',
-    justifyContent: 'flex-end',  // Align the content to the bottom of the screen
+    resizeMode: "cover",
+    justifyContent: "center", // Align the content to the bottom of the screen
   },
   content: {
     flex: 1,
-    justifyContent: 'flex-end',  // Make sure the content stays at the bottom
+    justifyContent: "flex-end", // Make sure the content stays at the bottom
   },
   semiCircle: {
-    height: '40%',  // Adjust the height of the semi-circle
-    width: '100%',
-    borderTopLeftRadius: 100,  // Creating the circular effect
+    height: "40%", // Adjust the height of the semi-circle
+    width: "100%",
+    borderTopLeftRadius: 100, // Creating the circular effect
     borderTopRightRadius: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: 50,  // Space for the button
+    justifyContent: "center",
+    alignItems: "center",
+    paddingBottom: 50, // Space for the button
   },
   animatedContent: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   welcomeText: {
-    color: '#FFA500', // Orange text
+    color: "#FFA500", // Orange text
     fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     marginBottom: 20,
     marginTop: 10,
   },
   button: {
-    backgroundColor: '#0000FF',  // Blue button background
+    backgroundColor: "#0000FF", // Blue button background
     width: 60,
     height: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 30,  // Circular button
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 30, // Circular button
     marginTop: 10,
   },
 });

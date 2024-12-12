@@ -8,47 +8,31 @@ import {
   ActivityIndicator,
 } from "react-native";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
-import { getFirestore, collection, addDoc } from "firebase/firestore";
-import { useNavigation } from "@react-navigation/native"; // Import useNavigation
-import { getAuth } from "firebase/auth";
+import { createPaymentLink } from "./Paymongo/payApi"; // Import the API function
+import { Linking } from "react-native"; // Import Linking to open the URL in the browser
 
-const GeneralMedicine = () => {
-  const navigation = useNavigation(); // Get the navigation prop
+const Urology = ({ navigation }) => {
   const [activeSection, setActiveSection] = useState("details");
   const [loading, setLoading] = useState(false);
-  const firestore = getFirestore();
-  const auth = getAuth();
 
+  // Handle booking consultation with payment link generation
   const handleBookConsultation = async () => {
     setLoading(true);
-
-    const user = auth.currentUser;
-
-    if (!user) {
-      alert("You must logged in first");
-      setLoading(false);
-      return;
-    }
-
-    const consultationData = {
-      type: "General Medicine",
-      price: 850,
-      status: "Pending",
-      timestamp: new Date().toISOString(),
-      uid: user.uid,
-    };
-
     try {
-      // Add to Firestore
-      await addDoc(collection(firestore, "appointments"), consultationData);
-
-      alert("Consultation booked successfully!");
-
-      // Redirect to Profile > Consultation tab
-      navigation.navigate("Profile", { screen: "ConsultationHistory" });
+      const paymentUrl = await createPaymentLink(
+        950, // Price of the Urology consultation
+        "Urology Consultation"
+      );
+      if (paymentUrl) {
+        // Open the payment URL in the default browser
+        Linking.openURL(paymentUrl); // Use Linking API to open the URL in the browser
+      } else {
+        console.error("Payment link not generated");
+        alert("Failed to generate payment link.");
+      }
     } catch (error) {
-      console.error("Error booking consultation:", error);
-      alert("Error booking consultation: " + error.message);
+      console.error("Error in booking consultation:", error);
+      alert("Error occurred during booking.");
     } finally {
       setLoading(false);
     }
@@ -66,7 +50,7 @@ const GeneralMedicine = () => {
       {/* Fixed Title and Toggle Buttons */}
       <View style={styles.fixedTitleAndToggle}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>General Medicine</Text>
+          <Text style={styles.title}>Urology</Text>
         </View>
         <View style={styles.toggleContainer}>
           <TouchableOpacity
@@ -105,10 +89,12 @@ const GeneralMedicine = () => {
         {activeSection === "details" && (
           <View style={styles.section}>
             <Text style={styles.description}>
-              General Practitioners (GPs) are your first line of support when it
-              comes to any medical concern. They provide a wide range of
-              healthcare services, including diagnosis, treatment, preventive
-              care, and management of long-term conditions.
+              Focus on diagnosing and treating conditions related to the urinary
+              tract and male reproductive organs. This includes issues such as
+              kidney stones, urinary tract infections, prostate health, and
+              erectile dysfunction, among others. Our experienced urologists
+              provide personalized care to address both acute and chronic
+              concerns.
             </Text>
 
             <Text style={styles.subtitle}>What to Expect</Text>
@@ -144,10 +130,13 @@ const GeneralMedicine = () => {
         {activeSection === "whom" && (
           <View style={styles.section}>
             <Text style={styles.whomText}>
-              Individuals with chronic conditions like asthma, diabetes, or
-              those seeking preventive care, vaccinations, and general health
-              check-ups would benefit from a consultation with a General
-              Medicine specialist.
+              Urology consultations are available for individuals of all ages,
+              but are particularly focused on those experiencing issues related
+              to the urinary system or male reproductive organs. This includes
+              conditions such as urinary tract infections (UTIs), kidney stones,
+              bedwetting, and issues related to the prostate or sexual health.
+              Urological care is essential for children, adolescents, and adults
+              facing urinary or reproductive health concerns.
             </Text>
           </View>
         )}
@@ -165,7 +154,7 @@ const GeneralMedicine = () => {
       {/* Fixed Footer Section - Consultation Box */}
       {activeSection === "details" && (
         <View style={styles.consultationBox}>
-          <Text style={styles.priceText}>P850</Text>
+          <Text style={styles.priceText}>P950</Text>
           <TouchableOpacity
             style={styles.bookButton}
             onPress={handleBookConsultation}
@@ -202,7 +191,7 @@ const styles = StyleSheet.create({
   },
   fixedTitleAndToggle: {
     position: "absolute",
-    top: 50,
+    top: 50, // Positioned below the header
     left: 0,
     right: 0,
     backgroundColor: "#fff",
@@ -236,7 +225,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    paddingTop: 180,
+    paddingTop: 180, // Offset to avoid overlap with fixed header and title/toggle
     paddingBottom: 100,
   },
   section: {
@@ -309,13 +298,13 @@ const styles = StyleSheet.create({
     right: 0,
     padding: 30,
     backgroundColor: "#f5fffa",
-    alignItems: "center",
-    justifyContent: "space-between",
     flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   priceText: {
     fontSize: 16,
-    color: "191970",
+    color: "#191970",
   },
   bookButton: {
     backgroundColor: "#1e90ff",
@@ -324,9 +313,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   bookButtonText: {
-    fontWeight: "bold",
     color: "#fff",
+    fontWeight: "bold",
   },
 });
 
-export default GeneralMedicine;
+export default Urology;
